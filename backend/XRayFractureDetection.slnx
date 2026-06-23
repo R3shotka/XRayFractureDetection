@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="XRayFractureDetection.BusinessLogic/XRayFractureDetection.BusinessLogic.csproj" />
+  <Project Path="XRayFractureDetection.DataAccess/XRayFractureDetection.DataAccess.csproj" />
+  <Project Path="XRayFractureDetection.Domain/XRayFractureDetection.Domain.csproj" />
+  <Project Path="XRayFractureDetection.WebAPI/XRayFractureDetection.WebAPI.csproj" />
+</Solution>

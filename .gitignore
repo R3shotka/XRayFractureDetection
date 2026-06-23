@@ -1,0 +1,8 @@
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/appsettings.Development.json
+
+# Secrets
+**/secrets.json
