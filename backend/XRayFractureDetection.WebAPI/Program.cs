@@ -16,6 +16,16 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
 // Onnx конфігурація
 builder.Services.Configure<OnnxOptions>(
     builder.Configuration.GetSection(OnnxOptions.SectionName));
@@ -47,6 +57,7 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseCors("AllowFrontend");
 
 if (app.Environment.IsDevelopment())
 {
