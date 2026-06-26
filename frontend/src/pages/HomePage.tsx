@@ -75,7 +75,7 @@ function MetricCard({ title, children }: { title: string; children: React.ReactN
   );
 }
 
-function ArrowBtn({ children }: { children: React.ReactNode }) {
+function _ArrowBtn({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f0f4fb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5b6b85', flexShrink: 0, cursor: 'pointer', fontSize: 18, userSelect: 'none' }}>
       {children}
