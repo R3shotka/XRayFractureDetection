@@ -2,6 +2,8 @@
 
 **Live demo:** https://x-ray-fracture-detection.vercel.app
 
+> AI Integration · Computer Vision · ASP.NET Core · React
+
 An AI-powered web application that detects bone fractures in X-ray images. Upload a scan, get instant results — bounding boxes drawn over detected fractures with confidence scores.
 
 ![Analysis screenshot](assets/preview.png)
