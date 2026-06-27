@@ -20,6 +20,13 @@ An AI-powered web application that detects bone fractures in X-ray images. Uploa
 - FluentValidation
 - Docker / Azure Container Apps
 
+**AI / Machine Learning**
+- YOLOv8m (Ultralytics) — object detection
+- Custom-trained on 1 036 annotated X-ray images
+- Radiology-adapted augmentation strategy
+- Transfer learning + fine-tuning on extended dataset
+- Exported to ONNX format for cross-platform inference
+
 **Frontend**
 - React 19 + TypeScript
 - Canvas API (bounding box rendering)
@@ -62,6 +69,56 @@ BusinessLogic + DataAccess ← WebAPI
 `IInferenceService` is defined in BusinessLogic; `OnnxInferenceService` lives in WebAPI. The business layer is fully testable without loading a real model or touching the database.
 
 The image is **never written to disk** — it lives in a `MemoryStream` for the duration of one request and is then discarded. Only metadata is persisted: SHA-256 hash, file name, status, and detection results (relative bounding-box coordinates + confidence).
+
+---
+
+## ML Model
+
+The YOLOv8m model was trained and evaluated through two rounds of experimentation before integration.
+
+### Dataset
+
+- **1 036 annotated X-ray images**, single class: `Fracture`
+- Annotations in YOLO format (bounding boxes)
+- Split: train / validation / test
+
+### Training strategy — 2×2 experiment
+
+To find the best training configuration, four variants were compared across two axes: weight initialisation (from scratch vs. transfer learning from `yolov8m.pt`) and augmentation strategy (none vs. radiology-adapted).
+
+| Experiment | Precision | Recall | mAP50 | mAP50-95 |
+|---|---|---|---|---|
+| Scratch, no augmentation | 0.688 | 0.458 | 0.483 | 0.187 |
+| Scratch + radiology augmentation | 0.858 | **0.760** | 0.745 | **0.321** |
+| Transfer, no augmentation | 0.824 | 0.495 | 0.571 | 0.234 |
+| Transfer + radiology augmentation | 0.835 | 0.703 | **0.752** | 0.318 |
+
+Radiology-adapted augmentation had the largest positive effect — mAP50 improved by **+0.26** over the no-augmentation baseline. Standard colour/saturation augmentations were disabled (irrelevant for greyscale X-rays); moderate brightness, rotation, scale, horizontal flip, and limited mosaic were applied instead.
+
+### Fine-tuning on an extended dataset
+
+The initial model scored mAP50 = **0.794** on the original test set but only **0.094** on a new set of radiographs with different visual characteristics — confirming the need for further fine-tuning.
+
+Six fine-tuning strategies were evaluated (varying the training-set composition and whether early backbone layers were frozen):
+
+| Experiment | New test mAP50 | Old test mAP50 | Combined mAP50 |
+|---|---|---|---|
+| Baseline (no fine-tuning) | 0.094 | 0.794 | 0.643 |
+| New data only | 0.708 | 0.205 | 0.296 |
+| Mixed 50 / 50 | 0.656 | 0.762 | 0.737 |
+| **Mixed 67 % old / 33 % new** | **0.695** | **0.786** | **0.762** |
+
+Training only on new data achieved the highest new-set score but caused severe degradation on the original set. The best overall balance was reached with a **67 % old / 33 % new** mixture and a reduced learning rate of `0.0001` — mAP50 on the combined test set rose from 0.643 to **0.762** while the original-set score dropped by less than 0.01.
+
+### Final model
+
+The final model (`E5_mix_67old_33new_full`, best checkpoint) was exported to ONNX format (`imgsz=640`) and integrated directly into the .NET backend via `Microsoft.ML.OnnxRuntime`.
+
+![Training curves](assets/ml/e5_training_curves.png)
+
+![Detection example](assets/ml/detection_example.png)
+
+> **Disclaimer.** The model is integrated as an assistive tool only — it highlights suspicious regions for review. Final diagnosis remains with the radiologist.
 
 ---
 
